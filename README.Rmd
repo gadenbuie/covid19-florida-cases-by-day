@@ -1,0 +1,66 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.retina = 2,
+  fig.dpi = 150,
+  comment = "#>"
+)
+```
+
+# Florida COVID-19 Cases By Day and County
+
+## Packages
+
+```{r}
+library(tidyverse)
+
+# install.packages("geofacet")
+library(geofacet)
+```
+
+## Data
+
+The data is downloaded from a [gadenbuie/covid19-florida](https://github.com/gadenbuie/covid19-florida), a data repository collecting snapshots of data released by Florida Department of Health.
+The source data is available frok the FDOH [ArcGIS Feature Server](https://services1.arcgis.com/CY1LXxl9zlJeBuRZ/ArcGIS/rest/services/Florida_COVID_19_Cases_by_Day_For_Time_Series/FeatureServer).
+
+```{r cache=TRUE}
+fl_cases_by_day <- read_csv(
+  "https://github.com/gadenbuie/covid19-florida/raw/master/data/covid-19-florida_arcgis_cases-by-day.csv"
+)
+```
+
+## COVID-19 Cases by County
+
+```{r echo=FALSE, fig.height=9, fig.width=8}
+fl_cases_by_day %>% 
+  filter(!county %in% c("A State", "Unknown")) %>% 
+  mutate(county = recode(
+    county,
+    "Dade" = "Miami-Dade",
+    "Desoto" = "DeSoto"
+  )) %>% 
+  ggplot() +
+  aes(x = date, y = frequency) +
+  geom_line(show.legend = FALSE, color = "indianred3") +
+  scale_x_date(date_breaks = "4 months", date_labels = "%b") +
+  scale_y_continuous(trans = scales::log1p_trans()) +
+  theme_minimal(8) +
+  theme(
+    axis.text.y = element_blank(),
+    axis.title = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank()
+  ) +
+  geofacet::facet_geo(~county, grid = "us_fl_counties_grid1")
+
+
+```
+
